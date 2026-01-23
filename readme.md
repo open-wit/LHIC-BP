@@ -1,0 +1,91 @@
+# End-to-End Optimized Lossless Hyperspectral Image Compression with Bit Partition
+
+## Introduction
+
+This repository is the official PyTorch implementation of the paper *"End-to-End Optimized Lossless Hyperspectral Image Compression with Bit Partition"*.
+
+
+<img src="./assets/lhic.png" alt="Main" style="" />
+
+## Installation
+
+This implementation requires Python 3.11 and PyTorch 2.0.1.
+
+1. Install the dependencies
+
+   ```
+   pip install -r requirements.txt
+   ```
+   
+2. Compile the arithmetic coder
+
+   Please compile the arithmetic coder using the following commands. The compiled files are located in the directories `src/modules/coder/build`.
+
+   ```
+   cd src/modules/coder
+   sh setup.sh
+   ```
+   
+   We provide the arithmetic coder for Linux, Python 3.11, specifically `rans.cpython-311-x86_64-linux-gnu.so`.
+
+## Usage
+
+### Dataset
+
+Follow the [HyspecNet-11k](https://git.tu-berlin.de/rsim/hsi-compression) repository to prepare the dataset files.
+
+### Encode
+For encode the hyperspectral image, please run the following command.
+
+```
+CUDA_VISIBLE_DEVICES=0 python -m script.encode_lhic \
+         --config [path-to-config] \
+         --param_d [param_d] \
+         --msp_ckpt_dir [path-to-msp-ckpt] \
+         --lsp_ckpt_dir [path-to-lsp-ckpt] \
+         --data [path-to-original-data] \
+         --out [path-to-compressed-bitstream]
+```
+Here is an example command, we take the ENMAP01-____L2A-DT0000004950_20221103T162438Z_001_V010110_20221118T145147Z-Y01460273_X03110438-DATA.npy as input, which serves as a processed HySpecNet-11k testset image.
+```
+CUDA_VISIBLE_DEVICES=0 python -m script.encode_lhic \
+    --config ./ckpt/lhic_bp/config.yml \
+    --param_d 8 \
+    --msp_ckpt_dir ./ckpt/lhic_bp/msp_ckpt.pth \
+    --lsp_ckpt_dir ./ckpt/lhic_bp/lsp_ckpt.pth \
+    --data ./dataset/ENMAP01-____L2A-DT0000004950_20221103T162438Z_001_V010110_20221118T145147Z-Y01460273_X03110438-DATA.npy \
+    --out ./results/ENMAP01-____L2A-DT0000004950_20221103T162438Z_001_V010110_20221118T145147Z-Y01460273_X03110438-DATA.bin
+```
+
+### Decode
+For decode from bitstream, please run the following command.
+
+```
+CUDA_VISIBLE_DEVICES=0 python -m script.decode_lhic \
+         --config [path-to-config] \
+         --msp_ckpt_dir [path-to-msp-ckpt] \
+         --lsp_ckpt_dir [path-to-lsp-ckpt] \
+         --bin  [path-to-compressed-bitstream]\
+         --out  [path-to-save-decompressed-image] \
+         --data [path-to-original-data]
+```
+We provide an additional parameter for original hyperpsectral image so that we can direct check if the proposed method is lossless. You can also set it to None for pure decompress. Example command for decoding is listed below.
+
+```
+CUDA_VISIBLE_DEVICES=0 python -m run_lhic_bp.decode_lhic \
+         --config ./ckpt/best/config.yml \
+         --msp_ckpt_dir ./ckpt/lhic_bp/msp_ckpt.pth \
+         --lsp_ckpt_dir ./ckpt/lhic_bp/lsp_ckpt.pth \
+         --bin  ./results/ENMAP01-____L2A-DT0000004950_20221103T162438Z_001_V010110_20221118T145147Z-Y01460273_X03110438-DATA.bin \
+         --out  ./results/decoded_data.npy \
+         --data ./dataset/ENMAP01-____L2A-DT0000004950_20221103T162438Z_001_V010110_20221118T145147Z-Y01460273_X03110438-DATA.npy
+```
+
+
+## Pretrained Model
+Pretrained models are available [here](src/ckpt).
+
+
+## Acknowledgement
+
+Part of our code is implemented based on [ArIB-BPS](https://github.com/ZZ022/ArIB-BPS), [LineRWKV](https://github.com/diegovalsesia/linerwkv) and [DLPR](https://github.com/BYchao100/Deep-Lossy-Plus-Residual-Coding). Thanks for these excellent jobs!
