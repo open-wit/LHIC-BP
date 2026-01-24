@@ -194,7 +194,7 @@ def compute_logistic_mixture_cdf(
     y_val: Optional[int] = None,
 ):
     """
-    Returns pmfs (float) and cdfs_q (int32 quantized).
+    Returns cdfs_q (int32 quantized).
     """
     flag = False
     if mus.dim() == 4:
@@ -234,10 +234,9 @@ def compute_logistic_mixture_cdf(
     cdfs_q = torch.round(cdfs * scale).to(torch.int32)
 
     if flag:
-        pmfs = rearrange(pmfs, "b (h w) size -> b h w size", h=h, w=w)
         cdfs_q = rearrange(cdfs_q, "b (h w) size -> b h w size", h=h, w=w)
 
-    return pmfs, cdfs_q
+    return cdfs_q
 
 
 # ---------------------------
@@ -332,10 +331,10 @@ def encode_file(
                 start_ch += 1
 
             # CDFs
-            _, cdf_lsp = compute_logistic_mixture_cdf(
+            cdf_lsp = compute_logistic_mixture_cdf(
                 param_lsp["mu"], param_lsp["scale"], param_lsp["weight"], bit_depth=param_d
             )
-            _, cdf_msp = compute_logistic_mixture_cdf(
+            cdf_msp = compute_logistic_mixture_cdf(
                 param_msp["mu"], param_msp["scale"], param_msp["weight"], y_val=(num_y_vals >> param_d)
             )
 

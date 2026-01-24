@@ -128,11 +128,10 @@ def compute_logistic_mixture_cdf(
 
     if flag:
     # return b h w size
-        pmfs = rearrange(pmfs, 'b (h w) size -> b h w size', h=h, w=w)
         cdfs_q = rearrange(cdfs_q, 'b (h w) size -> b h w size', h=h, w=w)
 
 
-    return pmfs, cdfs_q
+    return cdfs_q
 
 def img2patch(img: torch.Tensor, patch_sz: int) -> torch.Tensor:
     """
@@ -345,7 +344,7 @@ def decode_msp(
                 scale = param["scale"][:, h, w]
                 weight = param["weight"][:, h, w]
 
-                _, cdf = compute_logistic_mixture_cdf(mu, scale, weight, y_val=(num_y_vals >> param_d))
+                cdf = compute_logistic_mixture_cdf(mu, scale, weight, y_val=(num_y_vals >> param_d))
                 sample = rans_decode_block(decoder, cdf, B=B, k=k)  # (B,k)
 
                 # write int symbols
@@ -416,7 +415,7 @@ def decode_lsp(
                 scale = param["scale"][:, h, w]
                 weight = param["weight"][:, h, w]
 
-                _, cdf = compute_logistic_mixture_cdf(mu, scale, weight, bit_depth=param_d)
+                cdf = compute_logistic_mixture_cdf(mu, scale, weight, bit_depth=param_d)
                 sample = rans_decode_block(decoder, cdf, B=B, k=k)  # (B,k)
 
                 lsp_ori_cpu[:, i, step.h_cpu, step.w_cpu] = sample.detach().cpu()
