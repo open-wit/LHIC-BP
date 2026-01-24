@@ -20,8 +20,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from modules.inference_lhic import LHIC_RNN_spectral, MSP_ARM, LSP_ARM
-from modules.coder.cbench.rans import RansDecoder
+from models.inference_lhic import LHIC_RNN_spectral, MSP_ARM, LSP_ARM
+from coder.cbench.rans import RansDecoder
 
 
 # ---------------------------
@@ -590,7 +590,7 @@ if __name__ == "__main__":
     logging.info(f"Using device: {device}")
 
     bin_path = Path(args.bin)
-    out_path = Path(args.out) if args.out is not None else bin_path.with_suffix(".decoded_patches.npy")
+    out_path = Path(args.out) if args.out is not None else bin_path.with_suffix(".decoded_files.npy")
 
     decode_file(
         bin_path=bin_path,

@@ -18,8 +18,8 @@ import torch.nn.functional as F
 from einops import rearrange
 from omegaconf import OmegaConf
 
-from modules.inference_lhic import LHIC_RNN_spectral, MSP_ARM, LSP_ARM
-from modules.coder.cbench.rans import BufferedRansEncoder
+from models.inference_lhic import LHIC_RNN_spectral, MSP_ARM, LSP_ARM
+from coder.cbench.rans import BufferedRansEncoder
 
 
 # ---------------------------
