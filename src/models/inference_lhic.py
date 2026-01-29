@@ -898,8 +898,6 @@ class MSP_ARM(Base_Model):
         self.spatial_net = PSCAM(config.dim_msp_spatial,config.N_layers_spatial_msp)
         self.param_net = Param_Net(config.dim_msp_spatial+config.dim_msp_spectral,config.dim_params,config)
         self.param_l0 = Param_L0(config.dim_msp_spatial, config.dim_params,config)
-    def forward(self,x,start_ch=None):
-        pass
     
 class LSP_ARM(Base_Model):
     def __init__(self,config):
@@ -912,6 +910,3 @@ class LSP_ARM(Base_Model):
         self.context_generate = Band_SpatialMix(config.dim_lsp_spectral, config.N_layers_context, config.dropout)
         self.param_net = Param_Net(config.dim_lsp_spatial+config.dim_lsp_spectral+config.dim_plane,config.dim_params, config)
         self.param_l0 = Param_L0(config.dim_lsp_spatial+config.dim_plane,config.dim_params, config)
-
-    def forward(self,x,start_ch=None):
-        pass

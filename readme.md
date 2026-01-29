@@ -74,7 +74,7 @@ CUDA_VISIBLE_DEVICES=0 python -m script.decode_lhic \
          --out  [path-to-save-decompressed-image] \
          --data [path-to-original-data]
 ```
-We provide an additional parameter for original hyperspectral image so that we can directly check if the proposed method is lossless. You can also set it to None for pure decompression. Example command for decoding is listed below.
+We provide an additional parameter --data for original hyperspectral image so that we can directly check if the proposed method is lossless. You can also set it to None for pure decompression. Example command for decoding is listed below.
 
 ```
 CUDA_VISIBLE_DEVICES=0 python -m script.decode_lhic \
