@@ -15,8 +15,6 @@ import pytorch_lightning as pl
 
 from models.guided_diffusion import unet
 
-nonlinearity = nn.SiLU
-
 DEBUG_TIME=False
 
 def __nop(ob):
@@ -316,13 +314,11 @@ class LHIC_RNN_spectral(nn.Module):
         self.state_bands = None
 
     def forward(self, x):
-        # x:(B,1,H,W) last band
+        # x:(B,1,H,W) current band
         # B: batch size
-        # C: number of columns
-        # output: (BC,1,F) decodable prediction of line l for current band
+        # output: (B,F,H,W) spectral condition for current band before spatial mixing
         with torch.no_grad():
             w = self.w
-            config = self.config
      
             B,_,H,W = x.shape
 
@@ -360,7 +356,7 @@ class LHIC_RNN_spectral(nn.Module):
 def RUN_CUDA(B, T, C, w, u, k, v):
     return WKV.apply(B, T, C, w, u, k, v)
 
-T_MAX = 512 # config.ctx_len
+T_MAX = 512
 wkv_cuda = load(name=f"wkv_{T_MAX}", sources=["./models/cuda/wkv_op.cpp", "./models/cuda/wkv_cuda.cu"], verbose=True, extra_cuda_cflags=["-res-usage", "--maxrregcount 60", "--use_fast_math", "-O3", "-Xptxas -O3", "--extra-device-vectorization", f"-DTmax={T_MAX}"])
 class WKV(torch.autograd.Function):
     @staticmethod
@@ -517,7 +513,6 @@ class Block(nn.Module):
         x = rearrange(x, '(b h w) c f -> (b c) f h w', h=h, w=w)
         x = x + self.spa(x)
         x = rearrange(x, '(b c) f h w -> b c f h w', c=c)
-        # x = rearrange(x, '(b h w) c f -> b c f h w', h=h, w=w)
 
         return x
 
@@ -552,7 +547,7 @@ class RSCEM(nn.Module):
 class MGCU(nn.Module):
     def __init__(self, dim_spatial):
         '''
-        MGCU for spectral condition
+        MGCU for spatial condition
         '''
         super().__init__()
         self.conv_in = nn.Conv2d(dim_spatial, dim_spatial, kernel_size=1)
@@ -573,7 +568,7 @@ class MGCU(nn.Module):
 class MGCU_s(nn.Module):
     def __init__(self, dim_spatial):
         '''
-        MGCU for spatial context
+        MGCU module
         '''
         super().__init__()
         self.norm1 = nn.LayerNorm(dim_spatial)
@@ -627,7 +622,7 @@ class PSCAM(nn.Module):
 
 class Band_SpatialMix(nn.Module):
     '''
-    hold context and generate
+    hold context and spatial mix spectral conditions
     '''
     def __init__(self, dim_spectral, N_layers_context, dropout):
         super(Band_SpatialMix, self).__init__()
@@ -639,10 +634,6 @@ class Band_SpatialMix(nn.Module):
                                     tuple([1]))
 
     def forward(self, x_spectral, start_ch)->torch.Tensor:
-        '''
-        train mode
-        size:B,C,H,W
-        '''
         if x_spectral.dim()==4:
             (B,FF,H,W) = x_spectral.shape
             x_param = self.spatial_mix(x_spectral,start_ch) # B*C F H W
