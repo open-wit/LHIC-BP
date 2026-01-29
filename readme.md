@@ -51,15 +51,15 @@ CUDA_VISIBLE_DEVICES=0 python -m script.encode_lhic \
          --data [path-to-original-data] \
          --out [path-to-compressed-bitstream]
 ```
-Here is an example command, we take the ENMAP01-____L2A-DT0000004950_20221103T162438Z_001_V010110_20221118T145147Z-Y01460273_X03110438-DATA.npy as input, which serves as a processed HyspecNet-11k testset image.
+Here is an example command, we take the ENMAP01-____L2A-DT0000004981_20221102T031513Z_004_V010110_20221116T123616Z-Y01430270_X08150942-DATA.npy as input, which serves as a processed HyspecNet-11k testset image.
 ```
 CUDA_VISIBLE_DEVICES=0 python -m script.encode_lhic \
     --config ./ckpt/lhic_bp/config.yml \
     --param_d 8 \
     --msp_ckpt_dir ./ckpt/lhic_bp/msp_ckpt.pth \
     --lsp_ckpt_dir ./ckpt/lhic_bp/lsp_ckpt.pth \
-    --data ./dataset/ENMAP01-____L2A-DT0000004950_20221103T162438Z_001_V010110_20221118T145147Z-Y01460273_X03110438-DATA.npy \
-    --out ./results/COMPRESSED.bin
+    --data ./dataset/ENMAP01-____L2A-DT0000004981_20221102T031513Z_004_V010110_20221116T123616Z-Y01430270_X08150942-DATA.npy \
+    --out ./results/ENMAP01-____L2A-DT0000004981_20221102T031513Z_004_V010110_20221116T123616Z-Y01430270_X08150942-DATA.bin
 ```
 
 ### Decode
@@ -78,12 +78,12 @@ We provide an additional parameter for original hyperspectral image so that we c
 
 ```
 CUDA_VISIBLE_DEVICES=0 python -m script.decode_lhic \
-         --config ./ckpt/best/config.yml \
+         --config ./ckpt/lhic_bp/config.yml \
          --msp_ckpt_dir ./ckpt/lhic_bp/msp_ckpt.pth \
          --lsp_ckpt_dir ./ckpt/lhic_bp/lsp_ckpt.pth \
-         --bin  ./results/ENMAP01-____L2A-DT0000004950_20221103T162438Z_001_V010110_20221118T145147Z-Y01460273_X03110438-DATA.bin \
+         --bin  ./results/ENMAP01-____L2A-DT0000004981_20221102T031513Z_004_V010110_20221116T123616Z-Y01430270_X08150942-DATA.bin \
          --out  ./results/decoded_data.npy \
-         --data ./dataset/ENMAP01-____L2A-DT0000004950_20221103T162438Z_001_V010110_20221118T145147Z-Y01460273_X03110438-DATA.npy
+         --data ./dataset/ENMAP01-____L2A-DT0000004981_20221102T031513Z_004_V010110_20221116T123616Z-Y01430270_X08150942-DATA.npy
 ```
 
 
