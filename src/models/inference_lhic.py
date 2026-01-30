@@ -39,7 +39,6 @@ def compute_dlml_loss(
     inv_scales = torch.exp(-log_scales)
 
     y_range = output_max_bound - output_min_bound
-    # explained in text
     epsilon = (0.5 * y_range) / (num_y_vals - 1)
     # convenience variable
     y = y.unsqueeze(-1).repeat(1, 1, 1, 1, means.shape[-1])
@@ -47,7 +46,7 @@ def compute_dlml_loss(
     # inputs to our sigmoid functions
     upper_bound_in = inv_scales * (centered_y + epsilon)
     lower_bound_in = inv_scales * (centered_y - epsilon)
-    # remember: cdf of logistic distr is sigmoid of above input format
+    # cdf of logistic distr is sigmoid of above input format
     upper_cdf = torch.sigmoid(upper_bound_in)
     lower_cdf = torch.sigmoid(lower_bound_in)
     # finally, the probability mass and equivalent log prob
@@ -56,10 +55,10 @@ def compute_dlml_loss(
     # edges
     low_bound_log_prob = upper_bound_in - F.softplus(
         upper_bound_in
-    )  # log probability for edge case of 0 (before scaling)
+    )  # log probability for edge case of min (before scaling)
     upp_bound_log_prob = -F.softplus(
         lower_bound_in
-    )  # log probability for edge case of 255 (before scaling)
+    )  # log probability for edge case of max (before scaling)
 
     log_probs = torch.where(y < output_min_bound + 1e-6, low_bound_log_prob,
                             torch.where(y > output_max_bound - 1e-6, upp_bound_log_prob,
@@ -75,7 +74,6 @@ def compute_dlml_loss(
     a = float(2**(-16))
     prob = (1-num_y_vals*a)*prob +a
     loss = -torch.log2(prob)
-    # print(loss)
 
     if reduction == "mean":
         loss = torch.mean(loss)

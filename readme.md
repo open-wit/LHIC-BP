@@ -1,4 +1,5 @@
-# End-to-End Optimized Lossless Hyperspectral Image Compression with Bit Partition
+# <p align="center"> End-to-End Optimized Lossless Hyperspectral Image Compression with Bit Partition</p>
+####  <p align="center"> Qizhi Huang, Zhe Zhang, Zhenzhong Chen</p>
 
 ## Introduction
 
@@ -37,7 +38,14 @@ This implementation requires Python 3.11 and PyTorch 2.0.1.
 
 ### Dataset
 
-Follow the [HyspecNet-11k](https://git.tu-berlin.de/rsim/hsi-compression) repository to prepare the dataset files.
+We follow the data preparation pipeline from the official [HyspecNet-11k](https://git.tu-berlin.de/rsim/hsi-compression) repository:
+
+- **Origin format:** raw hyperspectral scenes in **`.tiff`**
+- **Processed format:** preprocessed **NumPy** files saved as **`.npy`**
+- **Data type:** `int32`
+- **Value range:** `[0, 10000]` (integer)
+
+In other words, each `.tiff` cube is converted into a NumPy array and quantized to integers in `[0, 10000]`, then stored as an `int32` `.npy` file for training/evaluation.
 
 ### Encode
 To encode the hyperspectral image, please run the following command.
@@ -74,7 +82,7 @@ CUDA_VISIBLE_DEVICES=0 python -m script.decode_lhic \
          --out  [path-to-save-decompressed-image] \
          --data [path-to-original-data]
 ```
-We provide an additional parameter --data for original hyperspectral image so that we can directly check if the proposed method is lossless. You can also set it to None for pure decompression. Example command for decoding is listed below.
+We provide an additional parameter `--data` for original hyperspectral image so that we can directly check if the proposed method is lossless. You can also set it to None for pure decompression. Example command for decoding is listed below.
 
 ```
 CUDA_VISIBLE_DEVICES=0 python -m script.decode_lhic \
