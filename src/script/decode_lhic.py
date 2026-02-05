@@ -8,7 +8,7 @@ from __future__ import annotations
 import argparse
 import logging
 import math
-import pickle
+import struct
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,6 +23,38 @@ import torch.nn.functional as F
 from models.inference_lhic import LHIC_RNN_spectral, MSP_ARM, LSP_ARM
 from coder.cbench.rans import RansDecoder
 
+
+# ---------------------------
+# IO helpers
+# ---------------------------
+def read_uints(fd, n, fmt=">{:d}I"):
+    sz = struct.calcsize("I")
+    return struct.unpack(fmt.format(n), fd.read(n * sz))
+
+def read_bytes(fd, n, fmt=">{:d}s"):
+    sz = struct.calcsize("s")
+    return struct.unpack(fmt.format(n), fd.read(n * sz))[0]
+
+def decode(bin_save_path):
+    with open(bin_save_path, 'rb') as f:
+        pic_height, pic_width, pic_bands, param_d, num_y_vals, n_strings_msp, n_strings_lsp = read_uints(f, 7)
+        msp_strings = read_bytes(f, n_strings_msp)
+        lsp_strings = read_bytes(f, n_strings_lsp)
+        return pic_height, pic_width, pic_bands, param_d, num_y_vals, msp_strings, lsp_strings
+
+def get_patch_shape(height: int, width: int, patch_sz: int, S: int = 202):
+    pad_h = (patch_sz - height % patch_sz) % patch_sz
+    pad_w = (patch_sz - width  % patch_sz) % patch_sz
+
+    H2 = height + pad_h
+    W2 = width  + pad_w
+
+    h_num = H2 // patch_sz
+    w_num = W2 // patch_sz
+    B = h_num * w_num
+
+    return (B, S, patch_sz, patch_sz)
+    
 
 # ---------------------------
 # Logging / deterministic / device
@@ -447,16 +479,10 @@ def decode_file(
     t0 = time.time()
 
     logging.info(f"Loading bitstream: {bin_path}")
-    with open(bin_path, "rb") as f:
-        msp_bytes, lsp_bytes, patch_shape, orig_shape, param_d, num_y_vals = pickle.load(f)
-
-    patch_shape = tuple(patch_shape)
-    if len(patch_shape) != 4:
-        raise ValueError(f"Invalid patch_shape in bin: {patch_shape}")
+    pic_height, pic_width, pic_bands, param_d, num_y_vals, msp_bytes, lsp_bytes = decode(bin_path)
+    patch_shape = get_patch_shape(pic_height, pic_width, patch_size, pic_bands)
+    orig_shape = (pic_bands, pic_height, pic_width)
     B, S, H, W = patch_shape
-
-    if H != patch_size or W != patch_size:
-        raise ValueError(f"patch_size mismatch: bin has (H,W)=({H},{W}), args patch_size={patch_size}")
 
     logging.info(f"Patched shape from bin: B={B}, S={S}, H={H}, W={W}")
     logging.info(f"Loading config/models: {cfg_path} / {msp_ckpt_dir} / {lsp_ckpt_dir}")
@@ -551,7 +577,6 @@ def decode_file(
         arr = np.load(str(data_path))
         arr = np.clip(arr, 0, num_y_vals).astype(np.int32)
         x_in = torch.from_numpy(arr).to(torch.int32)
-        # x_in = img2patch(x_in, patch_size)
         if tuple(x_in.shape) != orig_shape:
             logging.warning(f"Original patched shape {tuple(x_in.shape)} != decoded shape {orig_shape}")
         diff = (x_hat.cpu() - x_in.cpu()).numpy()

@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import argparse
 import logging
-import pickle
 import time
+import struct
 from pathlib import Path
 from typing import Optional
 
@@ -21,6 +21,30 @@ from omegaconf import OmegaConf
 from models.inference_lhic import LHIC_RNN_spectral, MSP_ARM, LSP_ARM
 from coder.cbench.rans import BufferedRansEncoder
 
+# ---------------------------
+# IO helpers
+# ---------------------------
+
+def write_uints(fd, values, fmt=">{:d}I"):
+    fd.write(struct.pack(fmt.format(len(values)), *values))
+    return len(values) * 4
+
+def write_bytes(fd, values, fmt=">{:d}s"):
+    if len(values) == 0:
+        return 0
+    fd.write(struct.pack(fmt.format(len(values)), values))
+    return len(values)
+
+def encode(pic_height, pic_width, pic_bands, param_d, num_y_vals, msp_strings, lsp_strings, bin_save_path):
+    '''
+    bitstream structure: (pic_height, pic_width, pic_bands, param_d, num_y_vals, n_strings_msp, n_strings_lsp) msp_strings lsp_strings
+    '''
+    with open(bin_save_path, 'wb') as f:
+        n_strings_msp = len(msp_strings)
+        n_strings_lsp = len(lsp_strings)
+        write_uints(f, (pic_height, pic_width, pic_bands, param_d, num_y_vals, n_strings_msp, n_strings_lsp))
+        write_bytes(f, msp_strings)
+        write_bytes(f, lsp_strings)
 
 # ---------------------------
 # Logging / deterministic / device
@@ -378,12 +402,8 @@ def encode_file(
 
     logging.info(f"msp bpp={msp_bpp:.6f}, lsp bpp={lsp_bpp:.6f}, total bpp={tot_bpp:.6f}")
     logging.info(f"Encode compute time: {t_enc1 - t_enc0:.3f}s")
-
-    code_res = [msp_bytes, lsp_bytes, x_in.shape, orig_shape, param_d, num_y_vals]
-
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(out_path, "wb") as f:
-        pickle.dump(code_res, f)
+    # write bitstreams
+    encode(orig_shape[1], orig_shape[2], orig_shape[0],  param_d, num_y_vals, msp_bytes, lsp_bytes, out_path)
 
     logging.info(f"Saved: {out_path}")
 
